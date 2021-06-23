@@ -1,30 +1,41 @@
 package main
 
 import (
-	"fmt"
+	"flag"
 	"github.com/nyudlts/go-aspace"
+	"log"
 	"sync"
 )
 
 var (
 	client *aspace.ASClient
 	err error
-	repoId int = 6
-	numChunks = 10
+	repoId int
+	numChunks int
+	environment string
+	config string
 )
 
+func init(){
+	flag.IntVar(&repoId, "repository", 0, "repository id")
+	flag.IntVar(&numChunks, "chunks", 2, "number of chunks")
+	flag.StringVar(&environment, "environment", "dev", "environment")
+	flag.StringVar(&config, "config", "go-aspace.yml", "config file")
+}
+
 func main() {
-	client, err = aspace.NewClient("go-aspace.yml", "dev", 20)
+	flag.Parse()
+	client, err = aspace.NewClient(config, environment, 20)
 	if err != nil {
 		panic(err)
 	}
-
+	log.Println("go-aspace", aspace.LibraryVersion)
 	doids, err := client.GetDigitalObjectIDs(repoId)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println("Number of doids", len(doids))
+	log.Println("Number of doids", len(doids))
 
 	chunksize := len(doids) / numChunks
 	doidChunks := chunks(doids, chunksize)
@@ -40,26 +51,27 @@ func main() {
 	uris := []string{}
 	for range doidChunks {
 		chunk := <-c
-		fmt.Println("Adding", len(chunk), "uris to uri list")
+		log.Println("Adding", len(chunk), "uris to uri list")
 		uris = append(uris, chunk...)
 	}
 
-	fmt.Println(len(uris) == len(doids))
+	log.Println(len(uris) == len(doids))
 
 }
 
 func GetDOs(doids []int, c chan []string, count int) {
 
-	fmt.Println("Starting worker", count + 1, "processing", len(doids), "digital objects")
+	log.Println("Starting worker", count + 1, "processing", len(doids), "digital objects")
 
 	uris := []string{}
 	for _, doid := range doids {
+		//fmt.Print(" ", count+1)
 		do, err := client.GetDigitalObject(repoId, doid)
 		if err != nil {}
 		uris = append(uris, do.URI)
 	}
 
-	fmt.Println("worker", count + 1, "done")
+	log.Println("worker", count + 1, "done")
 	c <- uris
 
 }
