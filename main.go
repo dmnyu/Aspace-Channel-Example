@@ -56,7 +56,6 @@ func main() {
 	}
 
 	log.Println(len(uris) == len(doids))
-
 }
 
 func GetDOs(doids []int, c chan []string, count int) {
@@ -65,7 +64,6 @@ func GetDOs(doids []int, c chan []string, count int) {
 
 	uris := []string{}
 	for _, doid := range doids {
-		//fmt.Print(" ", count+1)
 		do, err := client.GetDigitalObject(repoId, doid)
 		if err != nil {}
 		uris = append(uris, do.URI)
@@ -73,7 +71,6 @@ func GetDOs(doids []int, c chan []string, count int) {
 
 	log.Println("worker", count + 1, "done")
 	c <- uris
-
 }
 
 func chunks(xs []int, chunkSize int) [][]int {
